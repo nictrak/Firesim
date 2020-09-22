@@ -3,6 +3,8 @@ import tile
 import numpy as np
 
 SIZE = 64
+MAX_X = 10
+MAX_Y = 8
 
 
 def tile_rect(size):
@@ -11,6 +13,7 @@ def tile_rect(size):
 
 def heat_pos(row, col, size):
     return int(size/2 + size * col), int(size/2 + size * row)
+
 
 def heat_radius(value, max_size):
     return int(value * max_size / 100)
@@ -24,11 +27,12 @@ clock = pygame.time.Clock()
 crashed = False
 
 tile_list = []
-heat_array = np.zeros((8, 8))
-heat_array[1][1] = 70
-for i in range(8):
+heat_array = np.zeros((MAX_Y, MAX_X))
+
+
+for i in range(MAX_Y):
     tile_row = []
-    for j in range(8):
+    for j in range(MAX_X):
         tile_row.append(tile.simple_tile)
     tile_list.append(tile_row)
 
