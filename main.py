@@ -1,22 +1,25 @@
 import pygame
 import tile
+import layer
 import numpy as np
 
-SIZE = 64
-MAX_X = 10
-MAX_Y = 8
+# Constant
+SIZE = 64  # pixel length of tile.
+MAX_X = 10  # x board size.
+MAX_Y = 8  # y board size.
 
 
 def tile_rect(size):
     return [size * col_num + 1, size * row_num + 1, size - 1, size - 1]
 
 
-def heat_pos(row, col, size):
+def cal_pos(row, col, size):
     return int(size/2 + size * col), int(size/2 + size * row)
 
 
-def heat_radius(value, max_size):
+def cal_radius(value, max_size):
     return int(value * max_size / 100)
+
 
 
 pygame.init()
@@ -27,8 +30,13 @@ clock = pygame.time.Clock()
 crashed = False
 
 tile_list = []
-heat_array = np.zeros((MAX_Y, MAX_X))
+layers = []
+heat_array = layer.Layer((255, 0, 0), MAX_X, MAX_Y)
+fire_array = layer.Layer((0, 0, 0), MAX_X, MAX_Y)
+layers.append(heat_array)
+layers.append(fire_array)
 
+fire_array.data[3][4] = 100
 
 for i in range(MAX_Y):
     tile_row = []
@@ -46,10 +54,11 @@ for row in enumerate(tile_list):
                          content['color'],
                          tile_rect(SIZE),
                          0)
-        pygame.draw.circle(gameDisplay,
-                           (255, 0, 0),
-                           heat_pos(row_num, col_num, SIZE),
-                           heat_radius(heat_array[row_num][col_num], SIZE/2))
+        for l in layers:
+            pygame.draw.circle(gameDisplay,
+                               l.color,
+                               cal_pos(row_num, col_num, SIZE),
+                               cal_radius(l.data[row_num][col_num], SIZE/2))
 
 while not crashed:
 
