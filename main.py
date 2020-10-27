@@ -38,6 +38,89 @@ def add_heat(heat,x,y,size):
     new_heat = heat + np.array(added_heat)
     return new_heat
 
+def fire_heat(fire_array):
+    parameter_add_heat = 0.5
+    fire_pos = []
+    y = fire_array.shape[0]
+    x = fire_array.shape[1]
+    for i in range(y):
+        for j in range(x):
+            if fire_array[i,j] > 0:
+                fire_pos.append((i, j))
+    heat = gen_zero_list(fire_array)
+    for m in fire_pos:
+        #1
+        heat[m[0]][m[1]] = 100
+
+        if m[1] + 1 < x:
+            if heat[m[0]][m[1]+1] == 0:
+                heat[m[0]][m[1]+1] += parameter_add_heat
+            else:
+                heat[m[0]][m[1] + 1] += parameter_add_heat/2
+        if m[1] - 1 >= 0:
+            if heat[m[0]][m[1] - 1] == 0:
+                heat[m[0]][m[1] - 1] += parameter_add_heat
+            else:
+                heat[m[0]][m[1] - 1] += parameter_add_heat/2
+        #2
+        if m[0] + 1 < y:
+            if heat[m[0]+1][m[1]] == 0:
+                heat[m[0]+1][m[1]] += parameter_add_heat
+            else:
+                heat[m[0] + 1][m[1]] += parameter_add_heat/2
+
+            if m[1] + 1 < x:
+                if heat[m[0]+1][m[1] + 1] == 0:
+                    heat[m[0]+1][m[1] + 1] += parameter_add_heat
+                else:
+                    heat[m[0] + 1][m[1] + 1] += parameter_add_heat/2
+            if m[1] - 1 >= 0:
+                if heat[m[0]+1][m[1] - 1] == 0:
+                    heat[m[0]+1][m[1] - 1] += parameter_add_heat
+                else:
+                    heat[m[0] + 1][m[1] - 1] += parameter_add_heat/2
+        #3
+        if m[0] - 1 >= 0:
+            if heat[m[0] - 1][m[1]] ==0:
+                heat[m[0] - 1][m[1]] += parameter_add_heat
+            else:
+                heat[m[0] - 1][m[1]] += parameter_add_heat/2
+
+            if m[1] + 1 < x:
+                if heat[m[0] - 1][m[1] + 1] == 0 :
+                    heat[m[0] - 1][m[1] + 1] += parameter_add_heat
+                else:
+                    heat[m[0] - 1][m[1] + 1] += parameter_add_heat/2
+            if m[1] - 1 >= 0:
+                if heat[m[0]-1][m[1] - 1] == 0:
+                    heat[m[0]-1][m[1] - 1] += parameter_add_heat
+                else:
+                    heat[m[0] - 1][m[1] - 1] += parameter_add_heat/2
+
+    heat_array = np.array(heat)
+    return heat_array
+
+def gen_fire_pos(heat):
+    l = []
+    y = heat.shape[0]
+    x = heat.shape[1]
+    for i in range(y):
+        for j in range(x):
+            if heat[i,j] > 99:
+                l.append((i,j))
+    return l
+
+def gen_fire2_pos(fire1):
+    l = []
+    y = fire1.shape[0]
+    x = fire1.shape[1]
+    for i in range(y):
+        for j in range(x):
+            if (fire1[i,j] > 0) and (fire1[i+1,j] > 0) and (fire1[i-1,j] > 0) and (fire1[i,j+1] > 0) and (fire1[i,j-1] > 0):
+                l.append((i, j))
+    return l
+
+
 
 
 # start pygame
@@ -53,13 +136,18 @@ tile_list = []
 layers = []
 heat_array = layer.Layer((255, 0, 0), MAX_X, MAX_Y)
 fire_array = layer.Layer((0, 0, 0), MAX_X, MAX_Y)
+fire2_array = layer.Layer((0, 255, 0), MAX_X, MAX_Y)
 # add new layers here
 layers.append(heat_array)
 layers.append(fire_array)
+layers.append(fire2_array)
 # do not forget to append the new one here
 '''end of layers implement'''
 
-heat_array.data[4,4] = 50
+heat_array.data = add_heat(heat_array.data,3,3,20)
+fire_array.data[5,5] = 20
+fire_array.data[3,7] = 20
+fire_array.data[1,1] = 20
 
 '''start draw tile'''
 # test only evey tile is simple_tile. You can change this set of code to draw new tile set.
@@ -109,7 +197,18 @@ while not crashed:
         if event.type == pygame.QUIT:
             crashed = True
 
-    heat_array.data = heat_array.data + 1
+    #heat_array.data = heat_array.data + 1
+    heat_array.data = heat_array.data + fire_heat(fire_array.data)
+
+    new_fire_pos = gen_fire_pos(heat_array.data)
+    for i in new_fire_pos:
+        fire_array.data[i[0]][i[1]] = 20
+        heat_array.data[i[0]][i[1]] = 100
+
+    new_fire2_pos = gen_fire2_pos(fire_array.data)
+    for i in new_fire2_pos:
+        fire2_array.data[i[0]][i[1]] = 40
+
     pygame.display.update()
     clock.tick(60)
 
