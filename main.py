@@ -23,6 +23,22 @@ def cal_pos(row, col, size):
 def cal_radius(value, max_size):
     return int(value * max_size / 100)
 
+def gen_zero_list(array):
+    l = []
+    for i in range(array.shape[0]):
+        m = []
+        for e in range(array.shape[1]):
+            m.append(0)
+        l.append(m)
+    return l
+
+def add_heat(heat,x,y,size):
+    added_heat = gen_zero_list(heat)
+    added_heat[y][x] = size
+    new_heat = heat + np.array(added_heat)
+    return new_heat
+
+
 
 # start pygame
 pygame.init()
@@ -42,6 +58,8 @@ layers.append(heat_array)
 layers.append(fire_array)
 # do not forget to append the new one here
 '''end of layers implement'''
+
+heat_array.data[4,4] = 50
 
 '''start draw tile'''
 # test only evey tile is simple_tile. You can change this set of code to draw new tile set.
@@ -71,10 +89,27 @@ for row in enumerate(tile_list):
 # game loop
 while not crashed:
 
+    for row in enumerate(tile_list):
+        row_num = row[0]
+        row_content = row[1]
+        for element in enumerate(row_content):
+            col_num = element[0]
+            content = element[1]
+            pygame.draw.rect(gameDisplay,
+                             content['color'],
+                             tile_rect(SIZE),
+                             0)
+            for l in layers:
+                pygame.draw.circle(gameDisplay,
+                                   l.color,
+                                   cal_pos(row_num, col_num, SIZE),
+                                   cal_radius(l.data[row_num][col_num], SIZE / 2))
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             crashed = True
 
+    heat_array.data = heat_array.data + 1
     pygame.display.update()
     clock.tick(60)
 
