@@ -205,9 +205,9 @@ while not crashed:
         fire_array.data[i[0]][i[1]] = 20
         heat_array.data[i[0]][i[1]] = 100
 
-    new_fire2_pos = gen_fire2_pos(fire_array.data)
-    for i in new_fire2_pos:
-        fire2_array.data[i[0]][i[1]] = 40
+    #new_fire2_pos = gen_fire2_pos(fire_array.data)
+    #for i in new_fire2_pos:
+        #fire2_array.data[i[0]][i[1]] = 40
 
     pygame.display.update()
     clock.tick(60)
