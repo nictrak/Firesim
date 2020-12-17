@@ -23,103 +23,39 @@ def cal_pos(row, col, size):
 def cal_radius(value, max_size):
     return int(value * max_size / 100)
 
-def gen_zero_list(array):
-    l = []
-    for i in range(array.shape[0]):
-        m = []
-        for e in range(array.shape[1]):
-            m.append(0)
-        l.append(m)
-    return l
 
-def add_heat(heat,x,y,size):
-    added_heat = gen_zero_list(heat)
-    added_heat[y][x] = size
-    new_heat = heat + np.array(added_heat)
-    return new_heat
+#array modify
+def shift_left(array):
+    a = np.delete(array, 0, axis = 1)
+    z = np.zeros((array.shape[0],1))
+    return np.append(a,z,axis = 1)
 
-def fire_heat(fire_array):
-    parameter_add_heat = 0.5
-    fire_pos = []
-    y = fire_array.shape[0]
-    x = fire_array.shape[1]
-    for i in range(y):
-        for j in range(x):
-            if fire_array[i,j] > 0:
-                fire_pos.append((i, j))
-    heat = gen_zero_list(fire_array)
-    for m in fire_pos:
-        #1
-        heat[m[0]][m[1]] = 100
+def shift_right(array):
+    a = np.delete(array, -1, axis = 1)
+    z = np.zeros((array.shape[0],1))
+    return np.append(z,a,axis = 1)
 
-        if m[1] + 1 < x:
-            if heat[m[0]][m[1]+1] == 0:
-                heat[m[0]][m[1]+1] += parameter_add_heat
-            else:
-                heat[m[0]][m[1] + 1] += parameter_add_heat/2
-        if m[1] - 1 >= 0:
-            if heat[m[0]][m[1] - 1] == 0:
-                heat[m[0]][m[1] - 1] += parameter_add_heat
-            else:
-                heat[m[0]][m[1] - 1] += parameter_add_heat/2
-        #2
-        if m[0] + 1 < y:
-            if heat[m[0]+1][m[1]] == 0:
-                heat[m[0]+1][m[1]] += parameter_add_heat
-            else:
-                heat[m[0] + 1][m[1]] += parameter_add_heat/2
+def shift_up(array):
+    a = np.delete(array, 0, axis=0)
+    z = np.zeros((1,array.shape[1]))
+    return np.append(a, z, axis=0)
 
-            if m[1] + 1 < x:
-                if heat[m[0]+1][m[1] + 1] == 0:
-                    heat[m[0]+1][m[1] + 1] += parameter_add_heat
-                else:
-                    heat[m[0] + 1][m[1] + 1] += parameter_add_heat/2
-            if m[1] - 1 >= 0:
-                if heat[m[0]+1][m[1] - 1] == 0:
-                    heat[m[0]+1][m[1] - 1] += parameter_add_heat
-                else:
-                    heat[m[0] + 1][m[1] - 1] += parameter_add_heat/2
-        #3
-        if m[0] - 1 >= 0:
-            if heat[m[0] - 1][m[1]] ==0:
-                heat[m[0] - 1][m[1]] += parameter_add_heat
-            else:
-                heat[m[0] - 1][m[1]] += parameter_add_heat/2
+def shift_down(array):
+    a = np.delete(array, -1, axis=0)
+    z = np.zeros((1,array.shape[1]))
+    return np.append(z, a, axis=0)
 
-            if m[1] + 1 < x:
-                if heat[m[0] - 1][m[1] + 1] == 0 :
-                    heat[m[0] - 1][m[1] + 1] += parameter_add_heat
-                else:
-                    heat[m[0] - 1][m[1] + 1] += parameter_add_heat/2
-            if m[1] - 1 >= 0:
-                if heat[m[0]-1][m[1] - 1] == 0:
-                    heat[m[0]-1][m[1] - 1] += parameter_add_heat
-                else:
-                    heat[m[0] - 1][m[1] - 1] += parameter_add_heat/2
+def spread(value_array,fire_array,add_heat):
+    spreader_array = np.clip(fire_array,0,1)
+    total =  shift_up(shift_left(spreader_array)) + shift_up(spreader_array) + shift_up(shift_right(spreader_array)) + shift_left(spreader_array) + spreader_array + shift_right(spreader_array) + shift_down(shift_left(spreader_array)) + shift_down(spreader_array) + shift_down(shift_right(spreader_array))
+    total = total * add_heat
+    return value_array + total
 
-    heat_array = np.array(heat)
-    return heat_array
-
-def gen_fire_pos(heat):
-    l = []
-    y = heat.shape[0]
-    x = heat.shape[1]
-    for i in range(y):
-        for j in range(x):
-            if heat[i,j] > 99:
-                l.append((i,j))
-    return l
-
-def gen_fire2_pos(fire1):
-    l = []
-    y = fire1.shape[0]
-    x = fire1.shape[1]
-    for i in range(y):
-        for j in range(x):
-            if (fire1[i,j] > 0) and (fire1[i+1,j] > 0) and (fire1[i-1,j] > 0) and (fire1[i,j+1] > 0) and (fire1[i,j-1] > 0):
-                l.append((i, j))
-    return l
-
+def update_fire_array(value_array,fire_array,start_point,size):
+    new_fire = np.where(value_array > start_point, 1,0)
+    #total_fire = fire_array + new_fire
+    #total_fire = np.clip(total_fire,0,1)*size
+    return  new_fire*size
 
 
 
@@ -135,19 +71,39 @@ crashed = False
 tile_list = []
 layers = []
 heat_array = layer.Layer((255, 0, 0), MAX_X, MAX_Y)
-fire_array = layer.Layer((0, 0, 0), MAX_X, MAX_Y)
-fire2_array = layer.Layer((0, 255, 0), MAX_X, MAX_Y)
+fire_lv1_array = layer.Layer((0, 0, 0), MAX_X, MAX_Y)
+fire_lv2_array = layer.Layer((0, 0, 0), MAX_X, MAX_Y)
+fire_lv3_array = layer.Layer((0, 0, 0), MAX_X, MAX_Y)
+wall_array = layer.Layer((0, 255, 0), MAX_X, MAX_Y)
+
+
 # add new layers here
 layers.append(heat_array)
-layers.append(fire_array)
-layers.append(fire2_array)
+layers.append(fire_lv1_array)
+layers.append(fire_lv2_array)
+layers.append(fire_lv3_array)
+layers.append(wall_array)
 # do not forget to append the new one here
 '''end of layers implement'''
 
-heat_array.data = add_heat(heat_array.data,3,3,20)
-fire_array.data[5,5] = 20
-fire_array.data[3,7] = 20
-fire_array.data[1,1] = 20
+#initiate
+heat_array.data[0,7] = 50
+heat_array.data[1,1] = 65
+heat_array.data[3,3] = 65
+heat_array.data[5,7] = 65
+
+wall_array.data[4,3] = 100
+wall_array.data[4,4] = 100
+wall_array.data[4,5] = 100
+wall_array.data[4,6] = 100
+wall_array.data[5,3] = 100
+wall_array.data[7,3] = 100
+wall_array.data[3,4] = 100
+wall_array.data[2,4] = 100
+wall_array.data[1,4] = 100
+
+
+
 
 '''start draw tile'''
 # test only evey tile is simple_tile. You can change this set of code to draw new tile set.
@@ -175,6 +131,18 @@ for row in enumerate(tile_list):
                                cal_radius(l.data[row_num][col_num], SIZE/2))
 
 # game loop
+fire_lv1_size = 20
+fire_lv2_size = 40
+fire_lv3_size = 60
+
+fire_lv1_start_point = 30
+fire_lv2_start_point = 60
+fire_lv3_start_point = 90
+
+heat_decay = -0.1
+fire2_add_heat = 0.1
+fire3_add_heat = fire2_add_heat + 0.05
+
 while not crashed:
 
     for row in enumerate(tile_list):
@@ -197,17 +165,16 @@ while not crashed:
         if event.type == pygame.QUIT:
             crashed = True
 
-    #heat_array.data = heat_array.data + 1
-    heat_array.data = heat_array.data + fire_heat(fire_array.data)
 
-    new_fire_pos = gen_fire_pos(heat_array.data)
-    for i in new_fire_pos:
-        fire_array.data[i[0]][i[1]] = 20
-        heat_array.data[i[0]][i[1]] = 100
+    heat_array.data += heat_decay
+    heat_array.data = spread(heat_array.data,fire_lv2_array.data,fire2_add_heat)
+    heat_array.data = spread(heat_array.data, fire_lv3_array.data, fire3_add_heat)
+    heat_array.data = heat_array.data - wall_array.data
+    heat_array.data = np.clip(heat_array.data,0,100)
 
-    #new_fire2_pos = gen_fire2_pos(fire_array.data)
-    #for i in new_fire2_pos:
-        #fire2_array.data[i[0]][i[1]] = 40
+    fire_lv1_array.data = update_fire_array(heat_array.data,fire_lv1_array.data,fire_lv1_start_point,fire_lv1_size)
+    fire_lv2_array.data = update_fire_array(heat_array.data, fire_lv2_array.data, fire_lv2_start_point, fire_lv2_size)
+    fire_lv3_array.data = update_fire_array(heat_array.data, fire_lv3_array.data, fire_lv3_start_point, fire_lv3_size)
 
     pygame.display.update()
     clock.tick(60)
